@@ -34,6 +34,16 @@
 <body>
   <div id="info">Latent Space Visualization</div>
   <script type="module">
+    // Check if embedded
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEmbedded = urlParams.get('embed') === 'true';
+
+    // Hide info text when embedded
+    if (isEmbedded) {
+      document.getElementById('info').style.display = 'none';
+    }
+  </script>
+  <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164/build/three.module.js';
 
     const scene = new THREE.Scene();
