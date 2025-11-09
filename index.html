@@ -57,33 +57,20 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Nested spheres with offset centers - breathing effect
+    // Simple flowing form - single elegant shape
     const group = new THREE.Group();
-    const spheres = [];
 
+    // Create a smooth, flowing toroidal form
+    const geometry = new THREE.TorusGeometry(1.5, 0.6, 32, 100);
     const material = new THREE.MeshBasicMaterial({
-      color: 0x4a5568,
+      color: 0x374151,
       wireframe: true,
       transparent: true,
-      opacity: 0.6
+      opacity: 0.75
     });
 
-    // Create 4 nested spheres with progressively larger sizes
-    const sizes = [0.8, 1.3, 1.8, 2.3];
-
-    for (let i = 0; i < sizes.length; i++) {
-      const geometry = new THREE.SphereGeometry(sizes[i], 48 + i * 16, 48 + i * 16);
-      const sphere = new THREE.Mesh(geometry, material.clone());
-      sphere.material.opacity = 0.4 + i * 0.1;
-      sphere.userData = {
-        index: i,
-        baseSize: sizes[i],
-        orbitRadius: i * 0.15,
-        orbitSpeed: 0.3 + i * 0.1
-      };
-      spheres.push(sphere);
-      group.add(sphere);
-    }
+    const torus = new THREE.Mesh(geometry, material);
+    group.add(torus);
 
     scene.add(group);
 
@@ -91,66 +78,91 @@
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
-    // Mouse interaction
-    let mouse = { x: 0, y: 0 };
-    let targetRotation = { x: 0, y: 0 };
-    let isInteracting = false;
+    // Physics-based interaction
+    let velocity = { x: 0, y: 0 };
+    let rotation = { x: 0.3, y: 0.5 };
+    let mouseX = 0, mouseY = 0;
+    let isDragging = false;
+    let previousMouseX = 0, previousMouseY = 0;
 
-    document.addEventListener('mousemove', (event) => {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      isInteracting = true;
+    // Mouse drag interaction
+    renderer.domElement.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      previousMouseX = e.clientX;
+      previousMouseY = e.clientY;
+      renderer.domElement.style.cursor = 'grabbing';
     });
 
-    document.addEventListener('mouseleave', () => {
-      isInteracting = false;
-    });
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - previousMouseX;
+        const deltaY = e.clientY - previousMouseY;
 
-    // Touch support for mobile
-    document.addEventListener('touchmove', (event) => {
-      if (event.touches.length > 0) {
-        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-        isInteracting = true;
+        velocity.x = deltaY * 0.005;
+        velocity.y = deltaX * 0.005;
+
+        previousMouseX = e.clientX;
+        previousMouseY = e.clientY;
+      } else {
+        // Subtle hover effect
+        mouseX = (e.clientX / window.innerWidth - 0.5) * 0.1;
+        mouseY = (e.clientY / window.innerHeight - 0.5) * 0.1;
       }
     });
 
-    document.addEventListener('touchend', () => {
-      isInteracting = false;
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      renderer.domElement.style.cursor = 'grab';
     });
 
-    let time = 0;
+    renderer.domElement.style.cursor = 'grab';
+
+    // Touch support
+    let touchStartX = 0, touchStartY = 0;
+
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (isDragging && e.touches.length > 0) {
+        const deltaX = e.touches[0].clientX - touchStartX;
+        const deltaY = e.touches[0].clientY - touchStartY;
+
+        velocity.x = deltaY * 0.005;
+        velocity.y = deltaX * 0.005;
+
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    });
+
+    renderer.domElement.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
     function animate() {
       requestAnimationFrame(animate);
-      time += 0.001;
 
-      // Interactive rotation based on mouse position
-      if (isInteracting) {
-        targetRotation.y = mouse.x * Math.PI * 0.5;
-        targetRotation.x = mouse.y * Math.PI * 0.3;
-      } else {
-        // Auto-rotate when not interacting
-        targetRotation.y = time * 0.2;
-        targetRotation.x = Math.sin(time * 0.3) * 0.15;
+      // Apply velocity (with damping for realistic physics)
+      if (!isDragging) {
+        velocity.x *= 0.95;
+        velocity.y *= 0.95;
       }
 
-      // Smooth interpolation
-      group.rotation.y += (targetRotation.y - group.rotation.y) * 0.05;
-      group.rotation.x += (targetRotation.x - group.rotation.x) * 0.05;
+      rotation.x += velocity.x;
+      rotation.y += velocity.y;
 
-      // Each sphere orbits slightly offset from center - creates breathing effect
-      spheres.forEach((sphere, i) => {
-        const orbitAngle = time * sphere.userData.orbitSpeed + i * Math.PI / 2;
+      // Gentle auto-rotation when idle
+      if (!isDragging && Math.abs(velocity.x) < 0.001 && Math.abs(velocity.y) < 0.001) {
+        rotation.y += 0.003;
+      }
 
-        // Offset the center position in a circular orbit
-        sphere.position.x = Math.cos(orbitAngle) * sphere.userData.orbitRadius;
-        sphere.position.y = Math.sin(orbitAngle * 1.3) * sphere.userData.orbitRadius;
-        sphere.position.z = Math.sin(orbitAngle * 0.7) * sphere.userData.orbitRadius;
-
-        // Counter-rotate each sphere
-        sphere.rotation.y = -time * (0.3 + i * 0.1);
-        sphere.rotation.x = time * (0.2 + i * 0.05);
-      });
+      // Apply rotation with subtle hover offset
+      group.rotation.x = rotation.x + mouseY;
+      group.rotation.y = rotation.y + mouseX;
 
       renderer.render(scene, camera);
     }
