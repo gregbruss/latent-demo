@@ -47,42 +47,17 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Create multiple nested toruses - Ruth Asawa style
-    const group = new THREE.Group();
-    const forms = [];
-
-    // Elegant wire material
+    // Single elegant flowing torus - minimal and contemplative
     const material = new THREE.MeshBasicMaterial({
-      color: 0x2c3e50,
+      color: 0x4a5568,
       wireframe: true,
       transparent: true,
-      opacity: 0.6
+      opacity: 0.7
     });
 
-    // Create nested flowing forms
-    for (let i = 0; i < 5; i++) {
-      const scale = 1 + i * 0.3;
-      const geometry = new THREE.TorusGeometry(scale, 0.15 + i * 0.05, 16, 64);
-      const mesh = new THREE.Mesh(geometry, material.clone());
-      mesh.rotation.x = Math.PI / 2 + i * 0.1;
-      mesh.rotation.y = i * 0.2;
-      forms.push(mesh);
-      group.add(mesh);
-    }
-
-    // Add a second layer with different orientation
-    for (let i = 0; i < 4; i++) {
-      const scale = 1.2 + i * 0.25;
-      const geometry = new THREE.TorusGeometry(scale, 0.1, 16, 64);
-      const mesh = new THREE.Mesh(geometry, material.clone());
-      mesh.material.opacity = 0.4;
-      mesh.rotation.x = Math.PI / 4;
-      mesh.rotation.z = i * 0.3;
-      forms.push(mesh);
-      group.add(mesh);
-    }
-
-    scene.add(group);
+    const geometry = new THREE.TorusKnotGeometry(1.5, 0.3, 128, 32, 2, 3);
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
 
     // Subtle lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -91,17 +66,11 @@
     let time = 0;
     function animate() {
       requestAnimationFrame(animate);
-      time += 0.003;
+      time += 0.001;
 
-      // Gentle, organic rotation
-      group.rotation.y = time * 0.5;
-      group.rotation.x = Math.sin(time * 0.3) * 0.2;
-
-      // Individual form movements
-      forms.forEach((form, i) => {
-        form.rotation.z += 0.001 * (i + 1);
-        form.position.y = Math.sin(time + i) * 0.1;
-      });
+      // Very slow, gentle rotation
+      mesh.rotation.y = time * 0.3;
+      mesh.rotation.x = time * 0.2;
 
       renderer.render(scene, camera);
     }
