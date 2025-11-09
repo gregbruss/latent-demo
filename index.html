@@ -57,47 +57,53 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Stretched sphere within sphere - vertical stacked pods
+    // Single organic onion-shaped pod with nested inner sphere
     const group = new THREE.Group();
 
-    // Inner sphere material (darker, denser)
+    // Inner sphere material (golden/bronze, denser wire)
     const innerMaterial = new THREE.MeshBasicMaterial({
-      color: 0x3a3a3a,
+      color: 0x8b7355,
       wireframe: true,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.8
     });
 
-    // Outer sphere material (lighter, more transparent)
+    // Outer sphere material (darker, more transparent)
     const outerMaterial = new THREE.MeshBasicMaterial({
-      color: 0x6a6a6a,
+      color: 0x4a4a4a,
       wireframe: true,
       transparent: true,
-      opacity: 0.5
+      opacity: 0.6
     });
 
-    // Create 3 stacked pod segments
-    const segments = [
-      { y: 1.2, innerScale: 0.4, outerScale: 0.7, stretch: 1.8 },
-      { y: 0, innerScale: 0.5, outerScale: 0.9, stretch: 2.0 },
-      { y: -1.3, innerScale: 0.45, outerScale: 0.8, stretch: 1.9 }
-    ];
+    // Inner sphere - round, golden core
+    const innerGeometry = new THREE.SphereGeometry(0.7, 40, 40);
+    const innerSphere = new THREE.Mesh(innerGeometry, innerMaterial);
+    innerSphere.scale.set(1, 1.1, 1); // Slightly stretched
+    group.add(innerSphere);
 
-    segments.forEach(seg => {
-      // Inner sphere - round
-      const innerGeometry = new THREE.SphereGeometry(seg.innerScale, 32, 32);
-      const innerSphere = new THREE.Mesh(innerGeometry, innerMaterial);
-      innerSphere.scale.y = seg.stretch;
-      innerSphere.position.y = seg.y;
-      group.add(innerSphere);
+    // Outer onion shape - more stretched and organic
+    const outerGeometry = new THREE.SphereGeometry(1.2, 40, 40);
+    const outerPositions = outerGeometry.attributes.position;
 
-      // Outer sphere - stretched
-      const outerGeometry = new THREE.SphereGeometry(seg.outerScale, 32, 32);
-      const outerSphere = new THREE.Mesh(outerGeometry, outerMaterial);
-      outerSphere.scale.y = seg.stretch;
-      outerSphere.position.y = seg.y;
-      group.add(outerSphere);
-    });
+    // Deform to create organic onion/teardrop shape
+    for (let i = 0; i < outerPositions.count; i++) {
+      const y = outerPositions.getY(i);
+      const x = outerPositions.getX(i);
+      const z = outerPositions.getZ(i);
+
+      // Create bulge in middle, taper at top and bottom
+      const normalizedY = y / 1.2;
+      const bulgeFactor = 1 - Math.pow(Math.abs(normalizedY), 1.5);
+
+      outerPositions.setX(i, x * (0.85 + bulgeFactor * 0.15));
+      outerPositions.setZ(i, z * (0.85 + bulgeFactor * 0.15));
+      outerPositions.setY(i, y * 1.3);
+    }
+    outerGeometry.computeVertexNormals();
+
+    const outerSphere = new THREE.Mesh(outerGeometry, outerMaterial);
+    group.add(outerSphere);
 
     scene.add(group);
 
