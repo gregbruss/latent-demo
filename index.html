@@ -91,14 +91,52 @@
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
+    // Mouse interaction
+    let mouse = { x: 0, y: 0 };
+    let targetRotation = { x: 0, y: 0 };
+    let isInteracting = false;
+
+    document.addEventListener('mousemove', (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      isInteracting = true;
+    });
+
+    document.addEventListener('mouseleave', () => {
+      isInteracting = false;
+    });
+
+    // Touch support for mobile
+    document.addEventListener('touchmove', (event) => {
+      if (event.touches.length > 0) {
+        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+        isInteracting = true;
+      }
+    });
+
+    document.addEventListener('touchend', () => {
+      isInteracting = false;
+    });
+
     let time = 0;
     function animate() {
       requestAnimationFrame(animate);
       time += 0.001;
 
-      // Main group rotation
-      group.rotation.y = time * 0.2;
-      group.rotation.x = Math.sin(time * 0.3) * 0.15;
+      // Interactive rotation based on mouse position
+      if (isInteracting) {
+        targetRotation.y = mouse.x * Math.PI * 0.5;
+        targetRotation.x = mouse.y * Math.PI * 0.3;
+      } else {
+        // Auto-rotate when not interacting
+        targetRotation.y = time * 0.2;
+        targetRotation.x = Math.sin(time * 0.3) * 0.15;
+      }
+
+      // Smooth interpolation
+      group.rotation.y += (targetRotation.y - group.rotation.y) * 0.05;
+      group.rotation.x += (targetRotation.x - group.rotation.x) * 0.05;
 
       // Each sphere orbits slightly offset from center - creates breathing effect
       spheres.forEach((sphere, i) => {
