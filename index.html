@@ -57,41 +57,65 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Horizontal flowing snake-like form
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x4a5568,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.65
-    });
+    // Multiple flowing, interweaving strands
+    const group = new THREE.Group();
+    const strands = [];
 
-    // Create a flowing tube along the X axis (horizontal)
-    class SnakeCurve extends THREE.Curve {
-      getPoint(t) {
-        const x = (t - 0.5) * 20; // Stretch horizontally
-        const y = Math.sin(t * Math.PI * 3) * 0.8; // Wave motion
-        const z = Math.cos(t * Math.PI * 2) * 0.5;
-        return new THREE.Vector3(x, y, z);
+    // Create 3 interweaving strands with different colors
+    const colors = [0x2d3748, 0x4a5568, 0x718096];
+
+    for (let i = 0; i < 3; i++) {
+      const material = new THREE.MeshBasicMaterial({
+        color: colors[i],
+        wireframe: false,
+        transparent: true,
+        opacity: 0.4
+      });
+
+      // Each strand follows a different sine wave pattern
+      class FlowCurve extends THREE.Curve {
+        constructor(offset, amplitude) {
+          super();
+          this.offset = offset;
+          this.amplitude = amplitude;
+        }
+
+        getPoint(t) {
+          const x = (t - 0.5) * 24;
+          const phase = this.offset * Math.PI * 0.5;
+          const y = Math.sin(t * Math.PI * 4 + phase) * this.amplitude;
+          const z = Math.cos(t * Math.PI * 3 + phase) * this.amplitude * 0.6;
+          return new THREE.Vector3(x, y, z);
+        }
       }
+
+      const path = new FlowCurve(i, 1.2);
+      const tubeGeometry = new THREE.TubeGeometry(path, 120, 0.12, 20, false);
+      const strand = new THREE.Mesh(tubeGeometry, material);
+      strands.push(strand);
+      group.add(strand);
     }
 
-    const path = new SnakeCurve();
-    const tubeGeometry = new THREE.TubeGeometry(path, 100, 0.3, 16, false);
-    const tube = new THREE.Mesh(tubeGeometry, material);
-    scene.add(tube);
+    scene.add(group);
 
     // Subtle lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
     let time = 0;
     function animate() {
       requestAnimationFrame(animate);
-      time += 0.001;
+      time += 0.002;
 
-      // Very slow rotation to show 3D depth
-      tube.rotation.z = Math.sin(time * 0.5) * 0.1;
-      tube.rotation.y = time * 0.2;
+      // Gentle undulating motion
+      group.rotation.y = Math.sin(time * 0.3) * 0.15;
+      group.rotation.x = Math.cos(time * 0.2) * 0.08;
+
+      // Individual strand animations
+      strands.forEach((strand, i) => {
+        strand.rotation.z = Math.sin(time * 0.4 + i) * 0.05;
+        strand.position.y = Math.sin(time * 0.5 + i * 1.2) * 0.1;
+      });
 
       renderer.render(scene, camera);
     }
