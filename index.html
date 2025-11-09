@@ -57,37 +57,47 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Organic flowing looped form inspired by Ruth Asawa
+    // Stretched sphere within sphere - vertical stacked pods
     const group = new THREE.Group();
 
-    const material = new THREE.MeshBasicMaterial({
-      color: 0x5a5a5a,
+    // Inner sphere material (darker, denser)
+    const innerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x3a3a3a,
       wireframe: true,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.85
     });
 
-    // Create a continuous flowing path that loops back on itself
-    class OrganicLoopCurve extends THREE.Curve {
-      getPoint(t) {
-        const angle = t * Math.PI * 2;
+    // Outer sphere material (lighter, more transparent)
+    const outerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x6a6a6a,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.5
+    });
 
-        // Main circular path with vertical wave
-        const x = Math.cos(angle) * 1.5;
-        const y = Math.sin(angle * 2) * 1.2 + Math.cos(angle * 3) * 0.3;
-        const z = Math.sin(angle) * 1.5;
+    // Create 3 stacked pod segments
+    const segments = [
+      { y: 1.2, innerScale: 0.4, outerScale: 0.7, stretch: 1.8 },
+      { y: 0, innerScale: 0.5, outerScale: 0.9, stretch: 2.0 },
+      { y: -1.3, innerScale: 0.45, outerScale: 0.8, stretch: 1.9 }
+    ];
 
-        return new THREE.Vector3(x, y, z);
-      }
-    }
+    segments.forEach(seg => {
+      // Inner sphere - round
+      const innerGeometry = new THREE.SphereGeometry(seg.innerScale, 32, 32);
+      const innerSphere = new THREE.Mesh(innerGeometry, innerMaterial);
+      innerSphere.scale.y = seg.stretch;
+      innerSphere.position.y = seg.y;
+      group.add(innerSphere);
 
-    const path = new OrganicLoopCurve();
-
-    // Create tube geometry along the path - handcrafted wire mesh feel
-    const tubeGeometry = new THREE.TubeGeometry(path, 120, 0.35, 24, true);
-    const tube = new THREE.Mesh(tubeGeometry, material);
-
-    group.add(tube);
+      // Outer sphere - stretched
+      const outerGeometry = new THREE.SphereGeometry(seg.outerScale, 32, 32);
+      const outerSphere = new THREE.Mesh(outerGeometry, outerMaterial);
+      outerSphere.scale.y = seg.stretch;
+      outerSphere.position.y = seg.y;
+      group.add(outerSphere);
+    });
 
     scene.add(group);
 
