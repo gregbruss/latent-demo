@@ -5,45 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Latent Demo</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #1a1a2e; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    html, body { margin: 0; height: 100%; background: linear-gradient(45deg, #ff0080, #7928ca, #0070f3); display: flex; align-items: center; justify-content: center; overflow: hidden; }
     canvas { display: block; }
-    #info { position: absolute; top: 20px; left: 20px; color: #0099ff; font-family: monospace; font-size: 18px; z-index: 100; }
+    #info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-family: Arial, sans-serif; font-size: 72px; font-weight: bold; z-index: 100; text-align: center; text-shadow: 0 0 20px rgba(0,0,0,0.8); }
   </style>
 </head>
 <body>
-  <div id="info">LATENT DEMO // 3D VISUALIZATION</div>
+  <div id="info">🚀 IT WORKS! 🎉<br>LATENT DEMO LIVE</div>
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164/build/three.module.js';
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(innerWidth, innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const geometry = new THREE.SphereGeometry(1.5, 64, 64);
+    const geometry = new THREE.SphereGeometry(3, 64, 64);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x00ffff,
+      color: 0xffff00,
       wireframe: true,
-      emissive: 0x0099ff,
-      emissiveIntensity: 0.3
+      emissive: 0xffff00,
+      emissiveIntensity: 1
     });
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    const light = new THREE.PointLight(0xffffff, 2);
+    const light = new THREE.PointLight(0xffffff, 3);
     light.position.set(5, 5, 5);
     scene.add(light);
 
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
 
-    camera.position.z = 3;
+    camera.position.z = 6;
 
     function animate() {
       requestAnimationFrame(animate);
-      sphere.rotation.x += 0.01;
-      sphere.rotation.y += 0.01;
+      sphere.rotation.x += 0.02;
+      sphere.rotation.y += 0.02;
       renderer.render(scene, camera);
     }
     animate();
