@@ -57,64 +57,37 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Two connected organic bulbous forms - Ruth Asawa style
+    // Organic flowing looped form inspired by Ruth Asawa
     const group = new THREE.Group();
 
     const material = new THREE.MeshBasicMaterial({
-      color: 0x4a5568,
+      color: 0x5a5a5a,
       wireframe: true,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.75
     });
 
-    // Upper bulb - more elongated teardrop shape
-    const upperGeometry = new THREE.SphereGeometry(0.8, 32, 32);
-    const upperPositions = upperGeometry.attributes.position;
+    // Create a continuous flowing path that loops back on itself
+    class OrganicLoopCurve extends THREE.Curve {
+      getPoint(t) {
+        const angle = t * Math.PI * 2;
 
-    // Deform to create organic teardrop shape
-    for (let i = 0; i < upperPositions.count; i++) {
-      const y = upperPositions.getY(i);
-      const x = upperPositions.getX(i);
-      const z = upperPositions.getZ(i);
+        // Main circular path with vertical wave
+        const x = Math.cos(angle) * 1.5;
+        const y = Math.sin(angle * 2) * 1.2 + Math.cos(angle * 3) * 0.3;
+        const z = Math.sin(angle) * 1.5;
 
-      // Squeeze at connection point, bulge in middle
-      const factor = Math.pow(Math.abs(y / 0.8), 0.6);
-      upperPositions.setX(i, x * (0.6 + factor * 0.4));
-      upperPositions.setZ(i, z * (0.6 + factor * 0.4));
-      upperPositions.setY(i, y * 1.2 + 0.3);
+        return new THREE.Vector3(x, y, z);
+      }
     }
-    upperGeometry.computeVertexNormals();
 
-    const upperBulb = new THREE.Mesh(upperGeometry, material);
-    upperBulb.position.y = 1;
-    group.add(upperBulb);
+    const path = new OrganicLoopCurve();
 
-    // Lower bulb - rounder, fuller
-    const lowerGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const lowerPositions = lowerGeometry.attributes.position;
+    // Create tube geometry along the path - handcrafted wire mesh feel
+    const tubeGeometry = new THREE.TubeGeometry(path, 120, 0.35, 24, true);
+    const tube = new THREE.Mesh(tubeGeometry, material);
 
-    for (let i = 0; i < lowerPositions.count; i++) {
-      const y = lowerPositions.getY(i);
-      const x = lowerPositions.getX(i);
-      const z = lowerPositions.getZ(i);
-
-      // Create fuller bottom shape
-      const factor = Math.pow(Math.abs(y / 1.0), 0.5);
-      lowerPositions.setX(i, x * (0.7 + factor * 0.3));
-      lowerPositions.setZ(i, z * (0.7 + factor * 0.3));
-      lowerPositions.setY(i, y * 1.1 - 0.2);
-    }
-    lowerGeometry.computeVertexNormals();
-
-    const lowerBulb = new THREE.Mesh(lowerGeometry, material);
-    lowerBulb.position.y = -0.8;
-    group.add(lowerBulb);
-
-    // Connecting neck
-    const neckGeometry = new THREE.CylinderGeometry(0.25, 0.3, 0.6, 16);
-    const neck = new THREE.Mesh(neckGeometry, material);
-    neck.position.y = 0.3;
-    group.add(neck);
+    group.add(tube);
 
     scene.add(group);
 
