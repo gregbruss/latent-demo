@@ -57,20 +57,64 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Simple flowing form - single elegant shape
+    // Two connected organic bulbous forms - Ruth Asawa style
     const group = new THREE.Group();
 
-    // Create a smooth, flowing toroidal form
-    const geometry = new THREE.TorusGeometry(1.5, 0.6, 32, 100);
     const material = new THREE.MeshBasicMaterial({
-      color: 0x374151,
+      color: 0x4a5568,
       wireframe: true,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.7
     });
 
-    const torus = new THREE.Mesh(geometry, material);
-    group.add(torus);
+    // Upper bulb - more elongated teardrop shape
+    const upperGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+    const upperPositions = upperGeometry.attributes.position;
+
+    // Deform to create organic teardrop shape
+    for (let i = 0; i < upperPositions.count; i++) {
+      const y = upperPositions.getY(i);
+      const x = upperPositions.getX(i);
+      const z = upperPositions.getZ(i);
+
+      // Squeeze at connection point, bulge in middle
+      const factor = Math.pow(Math.abs(y / 0.8), 0.6);
+      upperPositions.setX(i, x * (0.6 + factor * 0.4));
+      upperPositions.setZ(i, z * (0.6 + factor * 0.4));
+      upperPositions.setY(i, y * 1.2 + 0.3);
+    }
+    upperGeometry.computeVertexNormals();
+
+    const upperBulb = new THREE.Mesh(upperGeometry, material);
+    upperBulb.position.y = 1;
+    group.add(upperBulb);
+
+    // Lower bulb - rounder, fuller
+    const lowerGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const lowerPositions = lowerGeometry.attributes.position;
+
+    for (let i = 0; i < lowerPositions.count; i++) {
+      const y = lowerPositions.getY(i);
+      const x = lowerPositions.getX(i);
+      const z = lowerPositions.getZ(i);
+
+      // Create fuller bottom shape
+      const factor = Math.pow(Math.abs(y / 1.0), 0.5);
+      lowerPositions.setX(i, x * (0.7 + factor * 0.3));
+      lowerPositions.setZ(i, z * (0.7 + factor * 0.3));
+      lowerPositions.setY(i, y * 1.1 - 0.2);
+    }
+    lowerGeometry.computeVertexNormals();
+
+    const lowerBulb = new THREE.Mesh(lowerGeometry, material);
+    lowerBulb.position.y = -0.8;
+    group.add(lowerBulb);
+
+    // Connecting neck
+    const neckGeometry = new THREE.CylinderGeometry(0.25, 0.3, 0.6, 16);
+    const neck = new THREE.Mesh(neckGeometry, material);
+    neck.position.y = 0.3;
+    group.add(neck);
 
     scene.add(group);
 
